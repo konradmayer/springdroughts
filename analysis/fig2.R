@@ -137,6 +137,8 @@ droughts <- readRDS(here("data/droughts.rds"))
     geom_rect(aes(xmin = from - 0.5, xmax = to + 0.5,
                   ymin = -Inf, ymax = Inf, fill = id),
               data = droughts, alpha = 0.5, show.legend = FALSE) +
+    scale_fill_manual(values = rep(c("grey90", "grey70"), 2),
+                      breaks = droughts$id) +
     geom_line(aes(x = year, y = value, color = dataset), size = 0.2) +
     geom_line(aes(x = year, y = value_filt, color = dataset),
               size = 0.8)+
@@ -144,7 +146,6 @@ droughts <- readRDS(here("data/droughts.rds"))
                        values = c("gray20", brewer.pal(9,"Set1")[1],
                                   brewer.pal(9,"Set1")[2]))+
     geom_hline(yintercept = 0)+
-    scale_fill_manual(values = rep("lightgrey", 4))+
     scale_x_continuous(name = "Year", breaks = seq(1860, 2020, 20)) +
     scale_y_continuous(name = "EAWR", breaks = seq(-2, 2, 0.5)) +
     ggtitle("a)") +
@@ -196,11 +197,13 @@ summary(linear_model) # highly significant link
 plt_c_annotation <- paste0("r²: ",round(summary(linear_model)$r.squared,2),"\np.value: < 0.001")
 
 (plt_c <-
-    ggplot(model_dat) +
-    geom_point(aes(x = eawr, y = prec), color = "darkgrey") +
-    stat_smooth(aes(x = eawr, y = prec), method = "lm", se = FALSE,
+    ggplot(model_dat, aes(x = eawr, y = prec)) +
+    geom_point(aes(color = as.numeric(eawr > 1)),
+               show.legend = FALSE) +
+    scale_color_steps(low = "darkgray", high = "gray20") +
+    stat_smooth(method = "lm", se = FALSE,
                 fullrange = TRUE, color = "black", size = 0.5) +
-    stat_density2d(aes(x = eawr, y = prec, color = ..level..),
+    stat_density2d(aes(color = ..level..),
                    show.legend = FALSE, size = 0.2) +
     geom_hline(yintercept = 0, size = 0.2) +
     geom_vline(xintercept = 0, size = 0.2) +
