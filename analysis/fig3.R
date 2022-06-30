@@ -163,7 +163,11 @@ droughts <- readRDS(here("data/droughts.rds"))
   ) +
   coord_cartesian(xlim = c(1883, 2020)) +
   geom_point(aes(year, value),
-             data = . %>% filter(year == 2013), size = 3, show.legend = FALSE)
+             data = . %>% filter(year == 2013), size = 3, show.legend = FALSE) +
+  annotate(geom = "label", x = 2014, y = -0.7,
+             label = "ESD+2006",
+             color = "grey20",
+             size = 3, fontface = 2)
 )
 
 # Within the recent drought period, in the 10 years up to year 2013 there is a
@@ -201,7 +205,7 @@ plt_spatial <- ggplot() +
   scale_linetype_manual(values = c(1, 3)) +
   geom_sf(data = box_forcing, color = "gray20", fill = "transparent", size = 1) +
   geom_sf(data = box_response, color = "gray60", fill = "transparent", size = 1) +
-  labs(fill = "SST anomaly\ndifference", x = "Longitude", y = "Latitude",
+  labs(fill = "SST difference\n in ESD+2006", x = "Longitude", y = "Latitude",
        title = "a)") +
   theme_cool() +
   coord_sf(expand = TRUE, xlim = c(-90, 50), ylim = c(5, 70)) +
