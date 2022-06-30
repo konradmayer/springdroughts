@@ -48,12 +48,11 @@ droughts <- dat %>%
               aes(x = yy, y = pr_ano_filt), size = 0.5, linetype = "dashed") +
     geom_line(data = subset(dat, yy %in% c(2011:2020)),
               aes(x = yy, y = pr_ano_filt), size = 0.5, linetype = "dashed") +
-    annotate(geom = "label", x = unlist(droughts[droughts$major, "mid"]),
-             y = 55, label = "Major\nES drought period", color = "grey20",
+    annotate(geom = "label", x = unlist(droughts[, "mid"]),
+             y = ifelse(droughts$major, 55, -55),
+             label = paste0(ifelse(droughts$major, "ESD+", "ESD-"), droughts$from),
+             color = ifelse(droughts$major, "grey20", "grey50"),
              size = 3, fontface = 2) +
-    annotate(geom = "label", x = unlist(droughts[!droughts$major, "mid"]),
-             y = -55, label = "Minor\nES drought period", color = "grey50",
-             size = 3) +
     geom_hline(yintercept = sd(dat$pr_ano_filt) * c(-1, 1), size = 0.2,
                linetype = "dashed") +
     scale_x_continuous(name = "", breaks = seq(1800, 2020, 20)) +
