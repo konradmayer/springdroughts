@@ -7,6 +7,7 @@ library(here)
 library(stars)
 library(patchwork)
 library(rnaturalearth)
+library(RColorBrewer)
 
 
 source(here("R/gaussfilter.R"))
@@ -135,36 +136,36 @@ droughts <- readRDS(here("data/droughts.rds"))
 
 # plot panel b of fig3
 (plt_ts <- ggplot(data = df_ts) +
-  geom_rect(aes(xmin = from - 0.5, xmax = to + 0.5,
-                ymin = -Inf, ymax = Inf, fill = id),
-            data = droughts, alpha = 0.5, show.legend = FALSE) +
-  scale_fill_manual(values = rep(c("grey90", "grey70"), 2),
-                    breaks = droughts$id) +
-  geom_hline(yintercept = 0, col = "gray50") +
-  geom_line(aes(year, value, color = region), size = 1) +
-  scale_color_manual(
-    values = c("gray20", "gray60"),
-    breaks = c("forcing region", "response region")
-  ) +
-  scale_y_continuous(
-    name = "Differences of\nsmoothed SST anomalies [°C]",
-    breaks = seq(-1, 1, by = 0.2)
-  ) +
-  scale_x_continuous(name = "Year", breaks = seq(1800, 2020, by = 20)) +
-  theme_cool() +
-  ggtitle("b)") +
-  theme(
-    panel.grid.major = element_blank(), legend.position = c(0.21, 0.9),
-    legend.title = element_blank(),
-    legend.background = element_rect(color = NA, fill = NA),
-    legend.key = element_rect(colour = NA, fill = NA),
-    legend.text = element_text(size = 8),
-    plot.title = element_text(face = "bold")
-  ) +
-  coord_cartesian(xlim = c(1883, 2020)) +
-  geom_point(aes(year, value),
-             data = . %>% filter(year == 2013), size = 3, show.legend = FALSE) +
-  annotate(geom = "label", x = 2014, y = -0.7,
+    geom_rect(aes(xmin = from - 0.5, xmax = to + 0.5,
+                  ymin = -Inf, ymax = Inf, fill = id),
+              data = droughts, alpha = 0.5, show.legend = FALSE) +
+    scale_fill_manual(values = rep(c("grey90", "grey70"), 2),
+                      breaks = droughts$id) +
+    geom_hline(yintercept = 0, col = "gray50") +
+    geom_line(aes(year, value, color = region), size = 1) +
+    scale_color_manual(
+      values = c("gray20", "gray60"),
+      breaks = c("forcing region", "response region")
+    ) +
+    scale_y_continuous(
+      name = expression(Delta * SST[10] * ~ "[°C]"),
+      breaks = seq(-1, 1, by = 0.2)
+    ) +
+    scale_x_continuous(name = "Year", breaks = seq(1800, 2020, by = 20)) +
+    theme_cool() +
+    ggtitle("b)") +
+    theme(
+      panel.grid.major = element_blank(), legend.position = c(0.21, 0.9),
+      legend.title = element_blank(),
+      legend.background = element_rect(color = NA, fill = NA),
+      legend.key = element_rect(colour = NA, fill = NA),
+      legend.text = element_text(size = 8),
+      plot.title = element_text(face = "bold")
+    ) +
+    coord_cartesian(xlim = c(1883, 2020)) +
+    geom_point(aes(year, value),
+               data = . %>% filter(year == 2013), size = 3, show.legend = FALSE) +
+    annotate(geom = "label", x = 2014, y = -0.7,
              label = "ESD+2006",
              color = "grey20",
              size = 3, fontface = 2)
@@ -188,35 +189,46 @@ recent_pre[[1]][is.na(recent_pre[[1]])] <- 0 # workaround for smoother outlines 
 slp_anom <- calculate_anomaly(slp, time_subset = 2003:2013)
 
 # plot panel a of fig3
-plt_spatial <- ggplot() +
-  geom_contour_filled(
-    data = as_tibble(recent_pre), aes(longitude, latitude, z = `mean`),
-    breaks = c(seq(-0.6, 0.7, by = 0.1), Inf)
-  ) +
-  metR::scale_fill_divergent_discretised(label = label) +
-  geom_sf(data = land, fill = "gray80", color = "gray80") +
-  geom_contour(aes(longitude, latitude, z = msl, lty = msl < 0),
-               data = as_tibble(slp_anom), color = "gray20", size = 0.3,
-               show.legend = FALSE, breaks = c(
-                 -seq(30, 0.45, by = -0.2),
-                 seq(0.45, 30, by = 0.2)
-               )
-  ) +
-  scale_linetype_manual(values = c(1, 3)) +
-  geom_sf(data = box_forcing, color = "gray20", fill = "transparent", size = 1) +
-  geom_sf(data = box_response, color = "gray60", fill = "transparent", size = 1) +
-  labs(fill = "SST difference\n in ESD+2006", x = "Longitude", y = "Latitude",
-       title = "a)") +
-  theme_cool() +
-  coord_sf(expand = TRUE, xlim = c(-90, 50), ylim = c(5, 70)) +
-  theme(
-    legend.position = c(0.73, 0.2), legend.direction = "horizontal",
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 8, hjust = 1),
-    plot.title = element_text(face = "bold")
-  )
 
+custom_pal <- c("#2166AC", "#327CB7", "#4393C3", "#92C5DE", "#D1E5F0", "white", "white", "#FDDBC7", "#F4A582", "#D6604D", "#C33C3C", "#B2182B")
+
+custom_label <- function(.x) {
+  tmp <- round(.x, 1)
+  tmp[seq(1, length(tmp), by = 2)] <- ""
+  tmp
+}
+
+(plt_spatial <- ggplot() +
+    geom_contour_filled(
+      data = as_tibble(recent_pre), aes(longitude, latitude, z = `mean`),
+      breaks = c(seq(-0.6, 0.5, by = 0.1), Inf)
+    )+
+    scale_fill_manual(values = custom_pal, labels = custom_label,
+                      guide = guide_colorsteps(show.limits = FALSE)) +
+    geom_sf(data = land, fill = "gray80", color = "gray80") +
+    geom_contour(aes(longitude, latitude, z = msl, lty = msl < 0),
+                 data = as_tibble(slp_anom), color = "gray20", size = 0.3,
+                 show.legend = FALSE, breaks = c(
+                   -seq(30, 0.45, by = -0.2),
+                   seq(0.45, 30, by = 0.2)
+                 )
+    ) +
+    scale_linetype_manual(values = c(1, 2)) +
+    geom_sf(data = box_forcing, color = "gray20", fill = "transparent", size = 1) +
+    geom_sf(data = box_response, color = "gray60", fill = "transparent", size = 1) +
+    labs(fill = expression(atop(Delta * SST[10] * " [°C]", "ESD+2006")),
+         x = "Longitude", y = "Latitude",
+         title = "a)") +
+    theme_cool() +
+    coord_sf(expand = TRUE, xlim = c(-90, 50), ylim = c(5, 70)) +
+    theme(
+      legend.position = c(0.73, 0.2), legend.direction = "horizontal",
+      legend.text = element_text(size = 6),
+      legend.title = element_text(size = 8, hjust = 1),
+      plot.title = element_text(face = "bold")
+    )
+)
 
 # save composite plot to disk
 plt_spatial + plt_ts
-ggsave(here("output/fig3.png"), width = 10.5, height = 3.5, type = "cairo-png")
+ggsave(here("output/fig3.png"), width = 10.5, height = 3.5)
